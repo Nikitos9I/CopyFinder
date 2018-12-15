@@ -38,7 +38,7 @@ void Search::find_copies(QFileInfoList list) {
         QMap<QByteArray, QFileInfoList> hashes;
         for (QFileInfo file_info : *it) {
             sha.reset();
-            QFile file(file_info.path() + "/" + file_info.fileName());
+            QFile file(file_info.filePath());
 
 //            qDebug() << file_info.path() + "/" + file_info.fileName();
 
