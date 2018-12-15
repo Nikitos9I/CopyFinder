@@ -8,6 +8,8 @@
 #include <QTreeWidget>
 #include <QDebug>
 
+const int BUFFER_SIZE = 1024;
+
 void Search::find_copies(QFileInfoList list) {
     emit progress_value(0);
 
@@ -44,7 +46,11 @@ void Search::find_copies(QFileInfoList list) {
 //            qDebug() << file_info.path() + "/" + file_info.fileName();
 
             if (file.open(QIODevice::ReadOnly)) {
-                sha.addData(&file);
+                char a [BUFFER_SIZE];
+                while(!file.atEnd()) {
+                    file.read(a, sizeof(a));
+                    sha.addData(a);
+                }
             }
 
             QByteArray res = sha.result();
