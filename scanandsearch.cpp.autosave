@@ -1,0 +1,100 @@
+#include "scanandsearch.h"
+
+#include <QCryptographicHash>
+#include <QDir>
+#include <QDirIterator>
+#include <QFileInfo>
+#include <QTreeWidget>
+
+void ScanAndSearch::scan_directory(QString const& dir) {
+    _list.clear();
+    ui->statusBar->showMessage("Scannig directory ...");
+    QDirIterator d(dir, QDir::Hidden | QDir::Files | QDir::NoSymLinks, QDirIterator::Subdirectories);
+
+    while (d.hasNext()) {
+        _list.push_back(QFileInfo(d.next()));
+    }
+
+    for (QFileInfo file_info : _list) {
+        QTreeWidgetItem* item = new QTreeWidgetItem(ui->treeWidget);
+        item->setText(0, file_info.fileName());
+        item->setText(1, QString::number(file_info.size()));
+        ui->treeWidget->addTopLevelItem(item);
+    }
+
+    ui->statusBar->showMessage(QString("Scanning was finished in ") + QString::number(timer.elapsed() / 1000.0) + QString(" sec"));
+}
+
+void ScanAndSearch::find_copies() {
+    ui->statusBar->showMessage("Finding copies ...");
+    ui->treeWidget->clear();
+    QMap<qint64, QVector<QFileInfo>> sortedFilesGroups;
+
+    for (QFileInfo file_info : _list) {
+        auto iter = sortedFilesGroups.find(file_info.size());
+        if (iter == sortedFilesGroups.end()) {
+            QVector<QFileInfo> currentVector;
+            currentVector.push_back(file_info);
+            sortedFilesGroups.insert(file_info.size(), currentVector);
+        } else {
+            iter->push_back(file_info);
+        }
+    }
+
+    QCryptographicHash sha(QCryptographicHash::Sha3_256);
+    QMapIterator<qint64, QVector<QFileInfo>> iter(sortedFilesGroups);
+    int progressBarValue = 0;
+    while (iter.hasNext()) {
+        iter.next();
+        if (iter.value().size() < 2) {
+            continue;
+        }
+
+        QMap<QByteArray, QVector<QFileInfo>> hashes;
+        for (QFileInfo file_info : iter.value()) {
+            sha.reset();
+            QFile file(file_info.fileName());
+
+            if (file.open(QIODevice::ReadOnly)) {
+                sha.addData(&file);
+            }
+
+            QByteArray sha_ans = sha.result();
+            auto st = hashes.find(sha_ans);
+
+            if (st == hashes.end()) {
+                QVector<QFileInfo> item;
+                item.push_back(file_info);
+                hashes.insert(sha_ans, item);
+            } else {
+                st->push_back(file_info);
+            }
+        }
+
+        listenProgress(100 * ++progressBarValue / sortedFilesGroups.size());
+        QStringList headerLabels;
+        headerLabels.push_back(tr("Directory"));
+        headerLabels.push_back(tr("FileName"));
+        headerLabels.push_back(tr("Size"));
+        ui->treeWidget->setColumnCount(headerLabels.count());
+        ui->treeWidget->setHeaderLabels(headerLabels);
+        ui->treeWidget->header()->setSectionResizeMode(0, QHeaderView::Stretch);
+        ui->treeWidget->header()->setSectionResizeMode(1, QHeaderView::Stretch);
+        ui->treeWidget->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+
+        for (auto st = hashes.begin(); st != hashes.end(); ++st) {
+            if (st->size() > 1) {
+                for (QFileInfo file_info : *st) {
+                    QTreeWidgetItem* item = new QTreeWidgetItem(ui->treeWidget);
+                    item->setText(0, file_info.dir().dirName());
+                    item->setText(1, file_info.fileName());
+                    item->setText(2, QString::number(file_info.size()));
+                    ui->treeWidget->addTopLevelItem(item);
+                }
+            }
+        }
+    }
+
+    listenProgress(100);
+    ui->statusBar->showMessage(QString("Finding was finished in ") + QString::number(timer.elapsed() / 1000.0) + QString(" sec"));
+}
