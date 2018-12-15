@@ -38,7 +38,7 @@ CopyFinder::CopyFinder(QWidget *parent) : QMainWindow(parent), ui(new Ui::CopyFi
     ui->findCopiesButton->setDisabled(true);
     ui->deleteCopiesButton->setDisabled(true);
     ui->cancelButton->setDisabled(true);
-    ui->treeWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    ui->treeWidget->setSelectionMode(QAbstractItemView::MultiSelection);
 }
 
 void CopyFinder::select_directory() {
@@ -76,6 +76,9 @@ void CopyFinder::killScanThread() {
     ui->statusBar->showMessage(QString("Scanning was finished in ") + QString::number(timer.elapsed() / 1000.0) + QString(" sec"));
     ui->cancelButton->setDisabled(true);
     ui->findCopiesButton->setDisabled(false);
+
+    new_thread->quit();
+    new_thread->wait();
 }
 
 void CopyFinder::createSearchThread() {
@@ -107,6 +110,9 @@ void CopyFinder::killSearchThread() {
     } else {
         ui->deleteCopiesButton->setDisabled(false);
     }
+
+    new_thread->quit();
+    new_thread->wait();
 }
 
 void CopyFinder::show_searching_files(QFileInfoList copies) {
@@ -234,5 +240,7 @@ void CopyFinder::deletE() {
 }
 
 CopyFinder::~CopyFinder() {
+    new_thread->quit();
+    new_thread->wait();
     delete ui;
 }

@@ -14,10 +14,10 @@ class CopyFinder;
 class CopyFinder : public QMainWindow
 {
     Q_OBJECT
-    QThread* new_thread;
 
 public:
     explicit CopyFinder(QWidget *parent = nullptr);
+    QThread * new_thread;
     ~CopyFinder();
 
 public slots:

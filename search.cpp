@@ -10,6 +10,7 @@
 
 void Search::find_copies(QFileInfoList list) {
     emit progress_value(0);
+
     QMap<qint64, QFileInfoList> sortedFilesGroups;
 
     for (QFileInfo file_info : list) {

@@ -14,7 +14,7 @@ signals:
     void search_finished();
 
 public slots:
-    void find_copies(QFileInfoList list);
+    void find_copies(QFileInfoList);
 };
 
 #endif // SCANANDSEARCH_H
