@@ -46,11 +46,7 @@ void Search::find_copies(QFileInfoList list) {
 //            qDebug() << file_info.path() + "/" + file_info.fileName();
 
             if (file.open(QIODevice::ReadOnly)) {
-                char a [BUFFER_SIZE];
-                while(!file.atEnd()) {
-                    file.read(a, sizeof(a));
-                    sha.addData(a);
-                }
+                sha.add($file);
             }
 
             QByteArray res = sha.result();
